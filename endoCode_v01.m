@@ -19,22 +19,25 @@ vidFrames = vidObj.NumberOfFrames;
 
 im1 = rgb2gray(read(vidObj,1));
 
-imshow(im1)
-
+% imshow(im1)
 
 %% Select region of interest
 
-% imROI = selectroi(im1);
-shift = 35;
+% % imROI = selectroi(im1);
+% shift = 35;
+% 
+% im1_crop = im1(1:426, 215-shift:640-shift);
+% imshow(im1_crop)
 
+[xBounds,yBounds] = declareCenter(im1);
 
-im1_crop = im1(1:426, 215-shift:640-shift);
-imshow(im1_crop)
 %%
 h = waitbar(0);
 for ind = 1:vidFrames-1
-    x = rgb2gray(read(vidObj,ind));
-    mov(:,:,ind) = x(1:426, 215-shift:640-shift);
+    originalImage = rgb2gray(read(vidObj,ind));
+    %     mov(:,:,ind) = x(1:426, 215-shift:640-shift);
+    mov(:,:,ind) = originalImage(yBounds,xBounds);
+    
     waitbar(ind/vidFrames,h)
 end
 
