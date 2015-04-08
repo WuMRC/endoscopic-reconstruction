@@ -47,7 +47,7 @@ close(h)
 
 %% Convert selected radius to "slice"
 
-radiusOfImage = size(im1_crop,1)/2;
+radiusOfImage = size(mov,1)/2;
 
 radiusOfCrop_outer = radiusOfImage;
 radiusOfCrop_inner = radiusOfImage-2;
@@ -57,7 +57,7 @@ rMax = radiusOfCrop_outer/radiusOfImage;
 reconstructedHeight = radiusOfCrop_outer-radiusOfCrop_inner;
 reconstructedWidth = (radiusOfCrop_outer+radiusOfCrop_inner)/2;
 
-im1_convert = ImToPolar(im1_crop,rMin,rMax,...
+im1_convert = ImToPolar(mov(:,:,1),rMin,rMax,...
     reconstructedHeight,reconstructedWidth);
 
 mesh(im1_convert)
