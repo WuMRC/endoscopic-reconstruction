@@ -49,8 +49,8 @@ close(h)
 
 radiusOfImage = size(mov,1)/2;
 
-radiusOfCrop_outer = radiusOfImage;
-radiusOfCrop_inner = radiusOfImage-2;
+radiusOfCrop_outer = radiusOfImage/2;
+radiusOfCrop_inner = radiusOfImage/2-2;
 
 rMin = radiusOfCrop_inner/radiusOfImage;
 rMax = radiusOfCrop_outer/radiusOfImage;
