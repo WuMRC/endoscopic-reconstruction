@@ -4,8 +4,6 @@
 %%
 clear, close, clc
 %% Pick file and show image
-% filename = 'Video_13140024_2014-12-03-13-32-36-0000-WL-patient E.avi';
-
 [filename, pathname] = uigetfile('*.*','Pick a movie file');
 addpath(genpath(pathname));
 cd(pathname)
@@ -36,7 +34,7 @@ h = waitbar(0);
 for ind = 1:vidFrames-1
     originalImage = rgb2gray(read(vidObj,ind));
     %     mov(:,:,ind) = x(1:426, 215-shift:640-shift);
-    mov(:,:,ind) = originalImage(yBounds,xBounds);
+    mov(:,:,ind) = originalImage(yBounds(10:end-10),xBounds(10:end-10));
     
     waitbar(ind/vidFrames,h)
 end
@@ -49,18 +47,22 @@ close(h)
 
 radiusOfImage = size(mov,1)/2;
 
-radiusOfCrop_outer = radiusOfImage/2;
-radiusOfCrop_inner = radiusOfImage/2-2;
+outerOffset = 20;
+innerOffset = 2;
+
+radiusOfCrop_outer = radiusOfImage-outerOffset;
+radiusOfCrop_inner = radiusOfCrop_outer-innerOffset;
 
 rMin = radiusOfCrop_inner/radiusOfImage;
 rMax = radiusOfCrop_outer/radiusOfImage;
 reconstructedHeight = radiusOfCrop_outer-radiusOfCrop_inner;
-reconstructedWidth = (radiusOfCrop_outer+radiusOfCrop_inner)/2;
+% reconstructedWidth = floor((radiusOfCrop_outer+radiusOfCrop_inner)*2*pi/2);
+reconstructedWidth = floor(radiusOfCrop_outer*2*pi);
 
 im1_convert = ImToPolar(mov(:,:,1),rMin,rMax,...
     reconstructedHeight,reconstructedWidth);
 
-mesh(im1_convert)
+figure, mesh(im1_convert)
 %%
 clear movSlices
 h = waitbar(0);
@@ -71,9 +73,44 @@ for ind = 1:vidFrames-1
 end
 close(h)
 
+%% Effects of Kalman filtering
+filteredStack = kalmanStack(movSlices,0.8,0.5);
+implay(uint8(movSlices))
+implay(uint8(filteredStack))
+
 %%
-imagesc(permute(mean(movSlices),[2 3 1]))
-colormap parula
+roughnessMap = permute(mean(movSlices),[2 3 1]);
+imagesc(roughnessMap)
+% surf(roughnessMap(60:513,78:300),'EdgeColor','none')
+colormap gray
+
+set(gca,'FontSize',16)
+xlabel('Pixel index')
+ylabel('Pixel index')
+% zlabel('Pixel intensity')
+
+%%
+xlimit = 653;%size(roughnessMap,2);
+ylimit = 792;
+x = cat(1,roughnessMap(ylimit:end,1:xlimit),roughnessMap(1:ylimit,1:xlimit));
+imagesc(x)
+
+%%
+plot(roughnessMap(:,200),'Color',[0.6 0.6 0.6],'LineWidth',2)
+hold on
+plot(smooth(roughnessMap(:,200),20),'k','LineWidth',2)
+
+set(gca,'FontSize',16)
+xlabel('Pixel index')
+ylabel('Pixel intensity')
+
+%%
+plot(roughnessMap(800,:),'Color',[0.6 0.6 0.6],'LineWidth',2)
+hold on
+plot(smooth(roughnessMap(800,:),20),'k','LineWidth',2)
+set(gca,'FontSize',16)
+xlabel('Pixel index')
+ylabel('Pixel intensity')
 
 %%
 % Need function to convert intensity/contrast to pixel height
@@ -98,3 +135,53 @@ ylabel('Length along radius [mm]','FontSize',16)
 zlabel('Surface height [unitless]','FontSize',16)
 % colormap gray
 set(gca,'FontSize',16)
+
+
+
+
+
+%% 
+[xx yy] = meshgrid(1:size(mov,1));
+R = sqrt(xx.^2 + yy.^2);
+
+%%
+middle = 348/2;
+for ind = 1:348/2-1
+    
+    images(middle-ind:middle+ind,middle-ind:middle+ind,ind) = mov(middle-ind:middle+ind,middle-ind:middle+ind,1);
+    
+    images1(middle-ind:middle+ind,middle-ind,ind) = ...
+        mov(middle-ind:middle+ind,middle-ind,1);
+    images1(middle-ind:middle+ind,middle+ind,ind) = ...
+        mov(middle-ind:middle+ind,middle+ind,1);
+    images1(middle-ind,middle-ind:middle+ind,ind) = ...
+        mov(middle-ind,middle-ind:middle+ind,1);
+    images1(middle+ind,middle-ind:middle+ind,ind) = ...
+        mov(middle+ind,middle-ind:middle+ind,1);
+    
+    images1(middle-ind:middle+ind,middle-ind,ind) = ...
+        mov(middle-ind:middle+ind,middle-ind,1);
+    images1(middle-ind:middle+ind,middle+ind,ind) = ...
+        mov(middle-ind:middle+ind,middle+ind,1);
+    images1(middle-ind,middle-ind:middle+ind,ind) = ...
+        mov(middle-ind,middle-ind:middle+ind,1);
+    images1(middle+ind,middle-ind:middle+ind,ind) = ...
+        mov(middle+ind,middle-ind:middle+ind,1);
+    
+    wall1 = linspace(1,12.5,ind*2+1);
+    wallSurf1 = double(images1(middle-ind,middle-ind:middle+ind,ind));
+    
+    wallStretch1(:,ind) = spline(wall1,wallSurf1,linspace(1,12.5,347));
+    
+end
+
+
+%%
+
+wall = linspace(1,10,length(51:347-50))
+wallSurf = double(images1(347-50,51:347-50,173-50))
+
+wallStretch = spline(wall,wallSurf,linspace(1,10,347))
+
+
+

@@ -5,7 +5,7 @@ function [xBounds,yBounds] = declareCenter(image)
 
 % Display image and specify the center point
 imshow(image)
-[xCenter,yCenter] = getpts;
+[xCenter,yCenter] = ginput(1);
 close
 
 % Find the region of interest given the size and shape of the image
@@ -19,6 +19,17 @@ else
         (xCenter + size(image,2) - xCenter));
     yBounds = uint16((yCenter - (size(image,2) - xCenter))+1:...
         (yCenter + size(image,2) - xCenter));
+end
+
+boundingZerosX = size(find(xBounds==0));
+boundingZerosY = size(find(yBounds==0));
+
+if boundingZerosX(1,2) > 0
+    xBounds = xBounds(xBounds>0);
+    yBounds = yBounds(xBounds>0);
+% else boundingZerosY(1,2) > 0
+%     xBounds = xBounds(yBounds>0);
+%     yBounds = yBounds(yBounds>0);
 end
 
 end
